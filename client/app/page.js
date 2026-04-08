@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { searchBooks, getFavorites, addFavorite, removeFavorite, addActivity, ensureProfile } from "../api";
-import { useAuth } from "../context/AuthContext";
-import BookCard from "../components/BookCard";
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { useUser, useAuth } from "@clerk/nextjs";
+import { createClerkSupabaseClient } from "@/lib/supabase";
+import { searchBooks, getFavorites, addFavorite, removeFavorite, addActivity, ensureProfile } from "@/lib/api";
+import BookCard from "@/components/BookCard";
 import { FiSearch } from "react-icons/fi";
 
-export default function Search() {
+export default function SearchPage() {
   const { user } = useUser();
-  const { supabase } = useAuth();
+  const { getToken } = useAuth();
+  const supabase = useMemo(
+    () => (user ? createClerkSupabaseClient(getToken) : null),
+    [user, getToken]
+  );
+
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -69,10 +76,7 @@ export default function Search() {
         cover_id: book.cover_id,
         first_publish_year: book.first_publish_year,
       });
-      setFavorites((prev) => [
-        ...prev,
-        { book_key: book.key, title: book.title },
-      ]);
+      setFavorites((prev) => [...prev, { book_key: book.key, title: book.title }]);
     }
   }
 
@@ -88,34 +92,40 @@ export default function Search() {
   }
 
   return (
-    <div className="page">
-      <div className="search-hero">
-        <h1>Discover your next great read</h1>
-        <p>Search millions of books from Open Library</p>
-        <form onSubmit={handleSearch} className="search-form">
-          <div className="search-input-wrap">
-            <FiSearch size={20} className="search-icon" />
+    <div className="max-w-[1100px] mx-auto px-6 py-8">
+      <div className="text-center py-12 pb-8">
+        <h1 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-indigo-500 to-purple-400 bg-clip-text text-transparent">
+          Discover your next great read
+        </h1>
+        <p className="text-gray-400 mb-6 text-lg">Search millions of books from Open Library</p>
+        <form onSubmit={handleSearch} className="flex gap-3 max-w-[640px] mx-auto">
+          <div className="flex-1 relative">
+            <FiSearch size={20} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by title, author, or subject..."
-              className="search-input"
+              className="w-full py-3 px-4 pl-11 bg-[#1a1a24] border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button
+            type="submit"
+            className="px-5 py-3 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
+            disabled={loading}
+          >
             {loading ? "Searching..." : "Search"}
           </button>
         </form>
       </div>
 
       {searched && (
-        <p className="search-count">
+        <p className="text-center text-gray-400 mb-6 text-sm">
           {total.toLocaleString()} results found
         </p>
       )}
 
-      <div className="book-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {books.map((book) => (
           <BookCard
             key={book.key}
@@ -128,15 +138,19 @@ export default function Search() {
       </div>
 
       {books.length > 0 && books.length < total && (
-        <div className="load-more">
-          <button className="btn btn-secondary" onClick={loadMore} disabled={loading}>
+        <div className="flex justify-center py-8">
+          <button
+            className="px-5 py-2.5 bg-white/5 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/10 disabled:opacity-50 transition-colors"
+            onClick={loadMore}
+            disabled={loading}
+          >
             {loading ? "Loading..." : "Load More"}
           </button>
         </div>
       )}
 
       {searched && books.length === 0 && !loading && (
-        <div className="empty-state">
+        <div className="text-center py-16 text-gray-400">
           <p>No books found. Try a different search!</p>
         </div>
       )}

@@ -14,7 +14,6 @@ export async function searchBooks(query, page = 1) {
       author: d.author_name?.[0] || "Unknown",
       cover_id: d.cover_i || null,
       first_publish_year: d.first_publish_year || null,
-      subjects: (d.subject || []).slice(0, 5),
     })),
   };
 }
