@@ -1,0 +1,112 @@
+import { supabase as publicSupabase } from "./supabase";
+
+// ─── Book Search (Open Library) ─────────────────
+
+export async function searchBooks(query, page = 1) {
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&page=${page}&limit=20`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return {
+    total: data.numFound,
+    books: (data.docs || []).map((d) => ({
+      key: d.key,
+      title: d.title,
+      author: d.author_name?.[0] || "Unknown",
+      cover_id: d.cover_i || null,
+      first_publish_year: d.first_publish_year || null,
+      subjects: (d.subject || []).slice(0, 5),
+    })),
+  };
+}
+
+// ─── Profiles ───────────────────────────────────
+
+export async function ensureProfile(supabase, userId, username) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (data) return data;
+
+  const colors = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6"];
+  const avatar_color = colors[Math.floor(Math.random() * colors.length)];
+
+  const { data: newProfile } = await supabase
+    .from("profiles")
+    .insert({ id: userId, username, avatar_color })
+    .select()
+    .single();
+
+  return newProfile;
+}
+
+// ─── Favorites ──────────────────────────────────
+
+export async function getFavorites(supabase, userId) {
+  const { data } = await supabase
+    .from("favorites")
+    .select("*")
+    .eq("user_id", userId)
+    .order("added_at", { ascending: false });
+  return data || [];
+}
+
+export async function addFavorite(supabase, userId, book) {
+  const { error } = await supabase.from("favorites").insert({
+    user_id: userId,
+    book_key: book.book_key,
+    title: book.title,
+    author: book.author || null,
+    cover_id: book.cover_id || null,
+    first_publish_year: book.first_publish_year || null,
+  });
+
+  if (!error) {
+    await supabase.from("reading_activity").insert({
+      user_id: userId,
+      book_key: book.book_key,
+      title: book.title,
+      author: book.author || null,
+      cover_id: book.cover_id || null,
+      status: "want_to_read",
+    });
+  }
+
+  return { error: error?.message };
+}
+
+export async function removeFavorite(supabase, userId, bookKey) {
+  await supabase
+    .from("favorites")
+    .delete()
+    .eq("user_id", userId)
+    .eq("book_key", bookKey);
+}
+
+// ─── Reading Activity / Feed ────────────────────
+
+export async function addActivity(supabase, userId, book) {
+  await supabase.from("reading_activity").insert({
+    user_id: userId,
+    book_key: book.book_key,
+    title: book.title,
+    author: book.author || null,
+    cover_id: book.cover_id || null,
+    status: book.status || "reading",
+  });
+}
+
+export async function getFeed() {
+  const { data } = await publicSupabase
+    .from("reading_activity")
+    .select("*, profiles(username, avatar_color)")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return (data || []).map((item) => ({
+    ...item,
+    username: item.profiles?.username,
+    avatar_color: item.profiles?.avatar_color,
+  }));
+}
