@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useUser, useAuth } from "@clerk/nextjs";
-import { createClerkSupabaseClient } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { supabase } from "@/lib/supabase";
 import { searchBooks, getFavorites, addFavorite, removeFavorite, ensureProfile } from "@/lib/api";
 import { FiSearch, FiHeart, FiBookOpen } from "react-icons/fi";
 
@@ -46,11 +46,6 @@ function BookResult({ book, isFavorite, onSave }) {
 
 export default function SearchPage() {
   const { user } = useUser();
-  const { getToken } = useAuth();
-  const supabase = useMemo(
-    () => (user ? createClerkSupabaseClient(getToken) : null),
-    [user, getToken]
-  );
 
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState([]);
@@ -60,11 +55,11 @@ export default function SearchPage() {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    if (user && supabase) {
+    if (user) {
       ensureProfile(supabase, user.id, user.username || user.firstName || "user");
       getFavorites(supabase, user.id).then(setFavorites).catch(() => {});
     }
-  }, [user, supabase]);
+  }, [user]);
 
   async function handleSearch(e) {
     e.preventDefault();
@@ -87,7 +82,7 @@ export default function SearchPage() {
   }
 
   async function handleSave(book) {
-    if (!user || !supabase) return alert("Sign in to save favorites!");
+    if (!user) return alert("Sign in to save favorites!");
     await addFavorite(supabase, user.id, {
       ol_key: book.ol_key,
       title: book.title,

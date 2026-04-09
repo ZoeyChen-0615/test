@@ -1,30 +1,24 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useUser, useAuth } from "@clerk/nextjs";
-import { createClerkSupabaseClient } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { supabase } from "@/lib/supabase";
 import { getFavorites, removeFavorite } from "@/lib/api";
 import { FiTrash2, FiBookOpen } from "react-icons/fi";
 
 export default function MyBooksPage() {
   const { user } = useUser();
-  const { getToken } = useAuth();
-  const supabase = useMemo(
-    () => (user ? createClerkSupabaseClient(getToken) : null),
-    [user, getToken]
-  );
-
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && supabase) {
+    if (user) {
       getFavorites(supabase, user.id)
         .then(setBooks)
         .catch(() => {})
         .finally(() => setLoading(false));
     }
-  }, [user, supabase]);
+  }, [user]);
 
   async function handleRemove(book) {
     await removeFavorite(supabase, user.id, book.ol_key);
