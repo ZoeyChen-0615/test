@@ -2,13 +2,8 @@
 
 import { FiHeart, FiBookOpen, FiCheck } from "react-icons/fi";
 
-function coverUrl(coverId, size = "M") {
-  if (!coverId) return null;
-  return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
-}
-
 export default function BookCard({ book, isFavorite, onToggleFavorite, onMarkReading, showActions = true }) {
-  const cover = coverUrl(book.cover_id);
+  const cover = book.cover_url || (book.cover_id ? `https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg` : null);
 
   return (
     <div className="flex gap-4 bg-[#1a1a24] border border-white/10 rounded-xl p-4 transition-all hover:border-indigo-500 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(99,102,241,0.1)]">

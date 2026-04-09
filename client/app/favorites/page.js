@@ -27,8 +27,8 @@ export default function FavoritesPage() {
   }, [user, supabase]);
 
   async function handleRemove(book) {
-    await removeFavorite(supabase, user.id, book.book_key);
-    setFavorites((prev) => prev.filter((f) => f.book_key !== book.book_key));
+    await removeFavorite(supabase, user.id, book.ol_key);
+    setFavorites((prev) => prev.filter((f) => f.ol_key !== book.ol_key));
   }
 
   if (loading) {

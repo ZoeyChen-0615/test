@@ -60,30 +60,30 @@ export default function SearchPage() {
   }
 
   function isFavorite(book) {
-    return favorites.some((f) => f.book_key === book.key);
+    return favorites.some((f) => f.ol_key === book.ol_key);
   }
 
   async function toggleFavorite(book) {
     if (!user || !supabase) return alert("Sign in to save favorites!");
     if (isFavorite(book)) {
-      await removeFavorite(supabase, user.id, book.key);
-      setFavorites((prev) => prev.filter((f) => f.book_key !== book.key));
+      await removeFavorite(supabase, user.id, book.ol_key);
+      setFavorites((prev) => prev.filter((f) => f.ol_key !== book.ol_key));
     } else {
       await addFavorite(supabase, user.id, {
-        book_key: book.key,
+        ol_key: book.ol_key,
         title: book.title,
         author: book.author,
         cover_id: book.cover_id,
         first_publish_year: book.first_publish_year,
       });
-      setFavorites((prev) => [...prev, { book_key: book.key, title: book.title }]);
+      setFavorites((prev) => [...prev, { ol_key: book.ol_key, title: book.title }]);
     }
   }
 
   async function markReading(book, status) {
     if (!user || !supabase) return alert("Sign in to track reading!");
     await addActivity(supabase, user.id, {
-      book_key: book.key,
+      ol_key: book.ol_key,
       title: book.title,
       author: book.author,
       cover_id: book.cover_id,
@@ -128,7 +128,7 @@ export default function SearchPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {books.map((book) => (
           <BookCard
-            key={book.key}
+            key={book.ol_key}
             book={book}
             isFavorite={isFavorite(book)}
             onToggleFavorite={toggleFavorite}

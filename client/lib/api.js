@@ -2,6 +2,11 @@ import { supabase as publicSupabase } from "./supabase";
 
 // ─── Book Search (Open Library) ─────────────────
 
+function coverUrl(coverId, size = "M") {
+  if (!coverId) return null;
+  return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
+}
+
 export async function searchBooks(query, page = 1) {
   const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&page=${page}&limit=20`;
   const res = await fetch(url);
@@ -9,9 +14,10 @@ export async function searchBooks(query, page = 1) {
   return {
     total: data.numFound,
     books: (data.docs || []).map((d) => ({
-      key: d.key,
+      ol_key: d.key,
       title: d.title,
       author: d.author_name?.[0] || "Unknown",
+      cover_url: coverUrl(d.cover_i),
       cover_id: d.cover_i || null,
       first_publish_year: d.first_publish_year || null,
     })),
@@ -48,24 +54,23 @@ export async function getFavorites(supabase, userId) {
     .from("favorites")
     .select("*")
     .eq("user_id", userId)
-    .order("added_at", { ascending: false });
+    .order("created_at", { ascending: false });
   return data || [];
 }
 
 export async function addFavorite(supabase, userId, book) {
   const { error } = await supabase.from("favorites").insert({
     user_id: userId,
-    book_key: book.book_key,
+    ol_key: book.ol_key,
     title: book.title,
     author: book.author || null,
-    cover_id: book.cover_id || null,
-    first_publish_year: book.first_publish_year || null,
+    cover_url: book.cover_url || null,
   });
 
   if (!error) {
     await supabase.from("reading_activity").insert({
       user_id: userId,
-      book_key: book.book_key,
+      book_key: book.ol_key,
       title: book.title,
       author: book.author || null,
       cover_id: book.cover_id || null,
@@ -76,12 +81,12 @@ export async function addFavorite(supabase, userId, book) {
   return { error: error?.message };
 }
 
-export async function removeFavorite(supabase, userId, bookKey) {
+export async function removeFavorite(supabase, userId, olKey) {
   await supabase
     .from("favorites")
     .delete()
     .eq("user_id", userId)
-    .eq("book_key", bookKey);
+    .eq("ol_key", olKey);
 }
 
 // ─── Reading Activity / Feed ────────────────────
@@ -89,7 +94,7 @@ export async function removeFavorite(supabase, userId, bookKey) {
 export async function addActivity(supabase, userId, book) {
   await supabase.from("reading_activity").insert({
     user_id: userId,
-    book_key: book.book_key,
+    book_key: book.ol_key,
     title: book.title,
     author: book.author || null,
     cover_id: book.cover_id || null,
