@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
-import { FiSearch, FiHeart, FiUsers, FiBookOpen } from "react-icons/fi";
+import { FiHome, FiSearch, FiBook, FiBookOpen } from "react-icons/fi";
 
 export default function Navbar() {
   const { isSignedIn } = useUser();
@@ -24,17 +24,17 @@ export default function Navbar() {
       </Link>
 
       <div className="flex gap-1">
+        <Link href="/" className={linkClass("/")}>
+          <FiHome size={18} /> Home
+        </Link>
         <Link href="/search" className={linkClass("/search")}>
           <FiSearch size={18} /> Search
         </Link>
         {isSignedIn && (
-          <Link href="/favorites" className={linkClass("/favorites")}>
-            <FiHeart size={18} /> Favorites
+          <Link href="/my-books" className={linkClass("/my-books")}>
+            <FiBook size={18} /> My Books
           </Link>
         )}
-        <Link href="/feed" className={linkClass("/feed")}>
-          <FiUsers size={18} /> Community
-        </Link>
       </div>
 
       <div className="flex items-center">
