@@ -24,7 +24,7 @@ export default function Navbar() {
       </Link>
 
       <div className="flex gap-1">
-        <Link href="/" className={linkClass("/")}>
+        <Link href="/search" className={linkClass("/search")}>
           <FiSearch size={18} /> Search
         </Link>
         {isSignedIn && (

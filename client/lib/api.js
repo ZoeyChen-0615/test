@@ -8,7 +8,7 @@ function coverUrl(coverId, size = "M") {
 }
 
 export async function searchBooks(query, page = 1) {
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&page=${page}&limit=20`;
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&page=${page}&limit=12`;
   const res = await fetch(url);
   const data = await res.json();
   return {
