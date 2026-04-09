@@ -59,6 +59,9 @@ export async function getFavorites(supabase, userId) {
 }
 
 export async function addFavorite(supabase, userId, book) {
+  // First ensure profile exists
+  await ensureProfile(supabase, userId, "user");
+
   const { error } = await supabase.from("favorites").insert({
     user_id: userId,
     ol_key: book.ol_key,
@@ -67,7 +70,9 @@ export async function addFavorite(supabase, userId, book) {
     cover_url: book.cover_url || null,
   });
 
-  if (!error) {
+  if (error) {
+    console.error("Failed to save favorite:", error);
+  } else {
     await supabase.from("reading_activity").insert({
       user_id: userId,
       book_key: book.ol_key,
